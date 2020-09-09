@@ -1,0 +1,66 @@
+---
+# tasks file for sample-mysql
+- name: creating partition
+  parted:
+    device: /dev/sdb
+    part_end: 800MiB
+    state: present
+    number: 1
+    unit: MiB
+
+- lvg:
+    vg: vg_database
+    state: present
+    pvs: /dev/sdb1
+
+- lvol:
+    lv: lv_mysql
+    state: present
+    vg: vg_database
+    size: 512m
+
+- filesystem:
+    dev: /dev/vg_database/lv_mysql
+    fstype: xfs
+
+- file:
+    state: directory
+    path: /mnt/backups
+    mode: 0775
+
+- mount:
+    src: /dev/vg_database/lv_mysql
+    path: /mnt/backups
+    state: mounted
+    fstype: xfs
+
+- yum:
+    name: 
+    - mysql-community-server
+    - MySQL-python
+    state: latest
+
+- firewalld:
+    zone: public
+    port: 3306/tcp
+    state: enabled
+    immediate: yes
+    permanent: yes
+
+- service:
+    name: mysqld
+    enabled: yes
+    state: started
+
+- mysql_user:
+    name: root
+    login_user: root
+    login_password: "{{ database_password }}"
+    password: "{{ database_password }}"
+    update_password: always
+
+- name: Setting mysql config
+  template:
+    src: my.cnf.j2
+    dest: /etc/my.cnf
+

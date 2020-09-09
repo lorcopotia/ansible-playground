@@ -1,0 +1,48 @@
+---
+- hosts: webservers
+  become: yes
+  vars_files:
+  - user_list.yml
+  - secret.yml
+  tasks:
+  - name: Creating users on webservers
+    user:
+      name: "{{ item.username }}"
+      uid: "{{ item.uid }}"
+      password: "{{ user_password | password_hash('sha512') }}"
+      groups: wheel
+      state: present
+      shell: /bin/bash
+      generate_ssh_key: yes
+    with_items: "{{ users }}"
+    when: item.uid|string|first == "1"
+  - copy:
+      src: id_rsa.pub
+      dest: /home/{{ item.username }}/.ssh/authorized_keys
+    loop: "{{ users }}"
+    when: item.uid|string|first == "1"
+
+
+- hosts: database
+  become: yes
+  vars_files:
+  - user_list.yml
+  - secret.yml
+  tasks:
+  - name: Creating users on webservers
+    user:
+      name: "{{ item.username }}"
+      uid: "{{ item.uid }}"
+      password: "{{ user_password | password_hash('sha512') }}"
+      groups: wheel
+      state: present
+      shell: /bin/bash
+      generate_ssh_key: yes
+    loop: "{{ users }}"
+    when: item.uid|string|first == "2"
+  - copy:
+      src: id_rsa.pub
+      dest: /home/{{ item.username }}/.ssh/authorized_keys
+    loop: "{{ users }}"
+    when: item.uid|string|first == "2"
+

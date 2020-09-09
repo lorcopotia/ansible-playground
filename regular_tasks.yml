@@ -1,0 +1,9 @@
+---
+- hosts: proxy
+  become: yes
+  tasks:
+  - name: creating cron job
+    copy:
+      content: date >> /var/log/time.log
+      dest: /etc/cron.hourly/time_job
+

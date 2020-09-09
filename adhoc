@@ -1,0 +1,8 @@
+#!/bin/bash
+
+sudo ansible all -b -m user -a "name=automation generate_ssh_key=yes state=present" -u root
+
+sudo ansible all -b -m copy -a "src=/home/automation/plays/id_rsa.pub dest=/home/automation/.ssh/authorized_keys mode=0600 owner=automation group=automation" -u root
+
+sudo ansible all -b -m copy -a 'content="automation ALL=(ALL) NOPASSWD: ALL\n" dest=/etc/sudoers.d/automation' -u root
+
