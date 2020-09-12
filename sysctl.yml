@@ -7,8 +7,8 @@
       name: vm.swappiness
       reload: yes
       value: '10'
-    when: ansible_facts.['ansible_memtotal_mb']|int > 2048
+    when: ansible_memtotal_mb|int > 2048
 
   - debug:
       msg: "Server memory less than 2048MB"
-    when: ansible_facts.ansible_memtotal_mb|int < 2048
+    when: ansible_memtotal_mb|int < 2048
