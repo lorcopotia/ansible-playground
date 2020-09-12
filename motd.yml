@@ -2,25 +2,24 @@
 - hosts: proxy
   become: yes
   tasks:
-  - name: Creating customized motd
+  - name: setting motd
     copy:
-      content: "Welcome to HAProxy server\n"
+      content: "Welcome to HAProxy server"
       dest: /etc/motd
 
 - hosts: webservers
   become: yes
   tasks:
-  - name: Creating customized motd
+  - name: setting motd
     copy:
-      content: "Welcome to Apache server\n"
+      content: "Welcome to Apache server"
       dest: /etc/motd
 
 - hosts: database
   become: yes
   tasks:
-  - name: Creating customized motd
+  - name: setting motd
     copy:
-      content: "Welcome to MySQL server\n"
+      content: "Welcome to MySQL server"
       dest: /etc/motd
-
 

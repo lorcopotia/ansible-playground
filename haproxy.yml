@@ -1,0 +1,14 @@
+---
+- hosts: proxy
+  become: yes
+  roles:
+    - geerlingguy.haproxy
+  tasks: 
+  - name: opening firewall port
+    firewalld:
+      service: http
+      state: enabled
+      permanent: yes
+      immediate: yes
+      zone: public
+

@@ -1,33 +1,34 @@
 ---
 # tasks file for roles/sample-apache
-- name: installing packages
-  yum: 
-    name:
-    - httpd
-    - mod_ssl
-    - php
-    state: present
 
-- name: enabling httpd
-  service:
+- name: installing packages
+  yum:
+    name:
+      - httpd
+      - mod_ssl
+      - php
+    state: latest
+
+- name: enabling httpd service
+  service: 
     name: httpd
     enabled: yes
     state: started
-    
-- name: configuring firewall
+
+- name: opening firewall port
   firewalld:
-    zone: public
+    service: "{{ item }}"
+    state: enabled
     permanent: yes
     immediate: yes
-    state: enabled
-    service: "{{ item }}"
   with_items:
-  - http
-  - https
+    - https
+    - http
 
-- name: creating html
+- name: creating web page
   template:
     src: index.html.j2
     dest: /var/www/html/index.html
-    mode: 0775
-  notify: restart httpd
+    mode: 0755
+  notify: restart apache
+

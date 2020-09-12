@@ -1,0 +1,8 @@
+---
+- hosts: webservers
+  become: yes
+  tasks:
+  - name: task 17
+    shell: 
+      cmd: "systemctl set-default multi-user.target"
+      creates: .defrunlevel

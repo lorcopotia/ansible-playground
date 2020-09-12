@@ -1,0 +1,14 @@
+---
+- hosts: webservers
+  become: yes
+  tasks: 
+  - name: setting selinux state
+    yum:
+      name: libsemanage-python
+      state: present
+
+  - seboolean:
+      name: httpd_can_network_connect
+      state: yes
+      persistent: yes
+

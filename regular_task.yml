@@ -1,0 +1,11 @@
+---
+- hosts: proxy
+  become: yes
+  gather_facts: no
+  tasks:
+  - name: creating job
+    copy:
+      content: date > /var/log/time.log
+      dest: /etc/cron.hourly/time-job
+      mode: 0755
+

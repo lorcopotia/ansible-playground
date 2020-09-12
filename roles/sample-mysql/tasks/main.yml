@@ -1,66 +1,73 @@
 ---
-# tasks file for sample-mysql
+# tasks file for roles/sample-mysql
+
 - name: creating partition
   parted:
     device: /dev/sdb
     part_end: 800MiB
-    state: present
     number: 1
+    state: present
     unit: MiB
 
-- lvg:
+- name: creating vg_database
+  lvg:
     vg: vg_database
-    state: present
     pvs: /dev/sdb1
 
-- lvol:
-    lv: lv_mysql
-    state: present
+- name: Create logical volume
+  lvol:
     vg: vg_database
+    lv: lv_mysql
     size: 512m
 
-- filesystem:
+- name: Create a ext2 filesystem on /dev/sdb1
+  filesystem:
+    fstype: xfs
     dev: /dev/vg_database/lv_mysql
-    fstype: xfs
 
-- file:
+- name: creating mount point
+  file:
+    path: /mnt/mysql_backups
     state: directory
-    path: /mnt/backups
-    mode: 0775
 
-- mount:
-    src: /dev/vg_database/lv_mysql
-    path: /mnt/backups
-    state: mounted
+- name: Mount up device by UUID
+  mount:
+    path: /mnt/mysql_backups
     fstype: xfs
+    state: present
+    src: /dev/vg_database/lv_mysql
 
-- yum:
+- name: installing mysql
+  yum:
     name: 
-    - mysql-community-server
-    - MySQL-python
-    state: latest
+      - mysql-community-server
+      - MySQL-python
+    state: present
 
-- firewalld:
-    zone: public
+- name: creating config file from template
+  template:
+    src: my.cnf.j2
+    dest: /etc/my.cnf
+
+- name: setting firewall
+  firewalld:
     port: 3306/tcp
+    permanent: yes
     state: enabled
     immediate: yes
-    permanent: yes
 
-- service:
+- name: enabling mysql at boot
+  service:
     name: mysqld
     enabled: yes
     state: started
 
-- mysql_user:
-    name: root
+- name: setting password for database user
+  mysql_user:
     login_user: root
     login_password: "{{ database_password }}"
     password: "{{ database_password }}"
-    update_password: always
+    name: root
+    update_password: always 
 
-- name: Setting mysql config
-  template:
-    src: my.cnf.j2
-    dest: /etc/my.cnf
 
