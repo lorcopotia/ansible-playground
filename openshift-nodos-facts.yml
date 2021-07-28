@@ -1,0 +1,24 @@
+---
+  - hosts: "{{servidor}}"
+    pre_tasks:
+    - name: Creando encabezado de Informe
+      lineinfile:
+        path: /home/recursos_servidores_{{ ansible_date_time.date }}_{{ ansible_date_time.hour }}:{{ ansible_date_time.minute }}.csv
+        owner: root
+        group: root
+        create: yes
+        mode: '0644'
+        insertafter: EOF
+        line: "FQDN,CPU,CPU core,Threads per core,vCPU,RAM,DEVICES"
+      delegate_to: "{{ bastion }}"
+    tasks:
+    - name: Agregando datos a Informe...
+      lineinfile:
+        path: /home/recursos_servidores_{{ ansible_date_time.date }}_{{ ansible_date_time.hour }}:{{ ansible_date_time.minute }}.csv
+        owner: root
+        group: root
+        mode: '0644'
+        insertafter: EOF
+        line: "{{ ansible_fqdn }},{{ ansible_processor | last }},{{ ansible_processor_cores }},{{ ansible_processor_threads_per_core }},{{ ansible_processor_vcpus }},{{ ansible_memtotal_mb }},{{ ansible_devices[item].size }}"
+      with_items: "{{ ansible_devices.keys() | select('match', '^sd(.*)$') | list }}"
+      delegate_to: "{{ bastion }}"
