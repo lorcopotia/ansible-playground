@@ -3,5 +3,4 @@
   gather_facts: no
   tasks:
   - name: Testing network connection
-    ansible.netcommon.net_ping:
-      dest: "{{ destination | default('_gateway') }}"
+    shell: ping -c3 "{{ destination | default('_gateway') }}"
