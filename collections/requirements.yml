@@ -1,0 +1,4 @@
+---
+collections:
+# basic.yml
+- ansible.netcommon
