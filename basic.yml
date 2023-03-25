@@ -1,0 +1,7 @@
+---
+- hosts: localhost
+  gather_facts: no
+  tasks:
+  - name: Testing network connection
+    ansible.netcommon.net_ping:
+      dest: "{{ destination | default('_gateway') }}"
