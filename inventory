@@ -8,3 +8,14 @@ ansible4.hl.local
 [database]
 ansible5.hl.local
 
+[win]
+192.168.1.2 ansible_user=Ansible ansible_password=Sup3rS3cr3t0!
+
+[win:vars]
+ansible_port=5985
+ansible_connection=winrm
+; Es posible que se necesite configurar Winrm de la siguiente panera para utilizar basic
+; winrm set winrm/config/service/auth '@{Basic="true"}'
+; winrm set winrm/config/service '@{AllowUnencrypted="true"}'
+ansible_winrm_transport=basic
+ansible_winrm_server_cert_validation=ignore
