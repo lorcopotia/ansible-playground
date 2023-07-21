@@ -1,0 +1,95 @@
+- name: Ejecutar script PowerShell y guardar salida en CSV y MySQL
+  hosts: win
+  gather_facts: false
+  vars:
+    archivo_agentes: C:\Temp\archivo.csv
+  vars_files:
+    - windows-apps-list.yaml
+  # El archivo windows-apps-list.yaml deberia contener una lista de agentes de la siguiente forma ej.:
+  # agentes:
+  #   - nombre: "Notepad"
+  
+  tasks:
+
+    - name: Ejecutar script de PowerShell y guardar salida en CSV
+      ansible.windows.win_powershell:
+        script: |
+          #$ServerId = "{{ inventory_hostname }}"
+          #(Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\* | Where { $_.DisplayName -Match "{{ item.nombre }}" }) | Select-object @{n="ServerId";e={$ServerId}} , DisplayName, Version, InstallDate | Export-Csv -Path C:\archivo.csv -NoTypeInformation -Append
+          # (Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\* | Where { $_.DisplayName -Match "{{ item.nombre }}" }) | Select-object @{n="ServerId";e={$ServerId}} , DisplayName, Version, InstallDate | Export-Csv -Path C:\archivo.csv -NoTypeInformation -Append
+
+          ###########
+          $ServerId = "{{ inventory_hostname }}"
+          $programName = "{{ item.nombre }}"
+          $csvPath = "C:\Temp\archivo.csv"
+
+          $programInstalled = Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\* | Where-Object { $_.DisplayName -match $programName }
+
+          if ($programInstalled) {
+              $result = [PSCustomObject]@{
+                  ServerId = $ServerId
+                  DisplayName = $programInstalled.DisplayName
+                  Version = $programInstalled.Version
+                  InstallDate = $programInstalled.InstallDate
+              }
+          } else {
+              $result = [PSCustomObject]@{
+                  ServerId = $ServerId
+                  DisplayName = $programName
+                  Version = "N/A"
+                  InstallDate = "N/A"
+              }
+          }
+
+          $result | Export-Csv -Path $csvPath -NoTypeInformation -Append
+      ignore_errors: true
+      loop: "{{ agentes }}"
+      register: script_output
+    
+    - debug:
+        # var: "{{ script_output | json_query('results[*].output[*].DisplayName') | flatten }} "
+        # msg: "{{ script_output | json_query('results[*].output[*].DisplayName') | flatten }} "
+        msg: "{{ info_agentes }}"
+
+    - name: Descargando fichero a servidor local
+      ansible.builtin.fetch:
+        src: 'C:\archivo.csv'
+        # Copiarlo a un path relativo al playbook ej. files/data-{{ inventory_hostname }}
+        dest: data-{{ inventory_hostname }}.csv
+        flat: yes
+      register: action
+    
+    - name: Remove file (delete file)
+      ansible.windows.win_file:
+        path: 'C:\archivo.csv'
+        state: absent
+      when: action.changed == true
+
+    - name: Leemos del fichero CSV 
+      community.general.read_csv:
+        path: data-{{ inventory_hostname }}.csv
+      register: report
+      delegate_to: localhost
+
+    - debug:
+        # var: "{{ script_output | json_query('results[*].output[*].DisplayName') | flatten }} "
+        # var: report.list
+        msg: "{{ item.DisplayName }}"
+      loop: "{{ report['list'] }}"
+
+    - name: Ejecutamos query en db 
+      community.mysql.mysql_query:
+        login_host: 192.168.1.145
+        login_user: admin
+        login_password: UltraS3cr3t_*
+        login_port: 3306
+        login_db: server_info
+        query: |
+          INSERT INTO estado_agentes (DisplayName, Version, InstallDate, ServerId, CheckedOn) 
+          VALUES ( "{{ item.DisplayName }}", "{{ item.Version }}", "{{ item.InstallDate }}", "{{ item.ServerId }}", CURDATE())
+          ON DUPLICATE KEY UPDATE 
+            Version = "{{ item.Version }}",
+            InstallDate = "{{ item.InstallDate }}",
+            CheckedOn = CURDATE();
+      loop: "{{ report['list'] }}"
+      delegate_to: localhost
