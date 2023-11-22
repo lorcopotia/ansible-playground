@@ -1,0 +1,9 @@
+---
+- name: Using roles or tasks
+  hosts: all
+  tasks:
+    - name: Calling the K8s role
+      ansible.builtin.import_role:
+        name: sample-kubernetes
+      vars:
+        image: nginx
