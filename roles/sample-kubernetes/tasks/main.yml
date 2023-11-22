@@ -9,9 +9,9 @@
         apiVersion: v1
         kind: Pod
         metadata:
-          name: nginx
+          name: mypod-from-ansible
           namespace: ansible-playground
         spec:
           containers:
-          - name: mi-web
-            image: nginx
+          - name: mycontainer
+            image: "{{ image }}"
