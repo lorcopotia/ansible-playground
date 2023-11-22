@@ -1,6 +1,6 @@
 ---
 - name: Using roles or tasks
-  hosts: all
+  hosts: localhost
   tasks:
     - name: Calling the K8s role
       ansible.builtin.import_role:
