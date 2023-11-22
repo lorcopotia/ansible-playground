@@ -1,0 +1,17 @@
+---
+- name: Crea un Pod en Kubernetes utilizando Ansible
+  hosts: localhost
+  tasks:
+  - name: Crea un Pod utilizando Ansible
+    kubernetes.core.k8s:
+      state: present
+      definition:
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: nginx
+          namespace: ansible-playground
+        spec:
+          containers:
+          - name: mi-web
+            image: nginx
