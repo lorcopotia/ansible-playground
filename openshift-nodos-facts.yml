@@ -1,5 +1,5 @@
 ---
-  - hosts: "{{servidor}}"
+  - hosts: "{{ servidor }}"
     pre_tasks:
     - name: Creando encabezado de Informe
       lineinfile:
