@@ -1,0 +1,8 @@
+---
+- name: Deploying Kubernetes cluster nodes
+  hosts: localhost
+  become: false
+  roles:
+    - role: libvirt
+  vars:
+    operation: "create"       # operation = "create" or "destroy"

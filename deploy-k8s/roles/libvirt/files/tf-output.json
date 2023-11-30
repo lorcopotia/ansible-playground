@@ -1,0 +1,28 @@
+{
+    "outputs": {
+        "ips": {
+            "sensitive": false,
+            "type": [
+                "tuple",
+                [
+                    [
+                        "list",
+                        "string"
+                    ],
+                    [
+                        "list",
+                        "string"
+                    ]
+                ]
+            ],
+            "value": [
+                [
+                    "192.168.5.180"
+                ],
+                [
+                    "192.168.5.181"
+                ]
+            ]
+        }
+    }
+}
