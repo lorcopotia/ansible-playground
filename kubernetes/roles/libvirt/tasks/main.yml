@@ -1,0 +1,73 @@
+# Listing VMs
+- name: '[GET] List all VMs'
+  community.libvirt.virt:
+    command: list_vms
+  register: all_vms
+
+- name: '[GET] List only running VMs'
+  community.libvirt.virt:
+    command: list_vms
+    state: running
+  register: running_vms
+
+- name: '[POST] List all'
+  debug:
+    var: all_vms.list_vms
+
+- block:
+    - name: '[POST] Basic Terraform deploy of a service'
+      community.general.terraform:
+        project_path: "{{ ansible_env['PWD'] }}/roles/libvirt/files/terraform"
+        force_init: true
+        state: present
+      register: terraform_create_output
+    
+    - name: '[POST] Wait for VMs IP information'
+      shell: sleep 5
+      delegate_to: localhost
+      tags: [delay]
+
+    - name: '[POST] Setting VMs ips as facts'
+      ansible.builtin.set_fact:
+        master_ip: "{{ terraform_create_output | json_query('outputs.ips.value[0][0]') }}"
+        worker_ip: "{{ terraform_create_output | json_query('outputs.ips.value[1][0]') }}"
+    
+    - name: '[POST] Wait for VMs to be configured'
+      wait_for:
+        delay: 180
+      tags: [delay]
+
+    - name: '[POST] Wait for VMs to be configured'
+      vars:
+        ansible_user: automation
+      wait_for:
+        path: /var/lib/cloud/instance/boot-finished
+      delegate_to: "{{ master_ip }}"
+
+    - name: '[POST] Initializing master node'
+      vars:
+        ansible_user: automation
+      ansible.builtin.shell: |
+        sudo kubeadm init --pod-network-cidr=10.244.0.0/16 --cri-socket unix:///var/run/containerd/containerd.sock
+        sudo kubeadm token create --print-join-command
+        sleep 5
+        sudo kubectl apply -f https://github.com/weaveworks/weave/releases/download/v2.8.1/weave-daemonset-k8s.yaml
+      register: kubeadm_output 
+      delegate_to: "{{ master_ip }}"
+
+    - name: '[POST] Initializing worker node'
+      vars:
+        ansible_user: automation
+        join_cmd: kubeadm_output | json_query('stdout_lines[-1:]')
+      ansible.builtin.shell: |
+        {{ join_cmd }}
+        # sudo kubectl apply -f https://github.com/weaveworks/weave/releases/download/v2.8.1/weave-daemonset-k8s.yaml
+      delegate_to: "{{ worker_ip }}" 
+  when: (operation == "create")
+
+- name: '[POST] Basic Terraform destroy of a service'
+  ansible.builtin.shell: |
+    cd "{{ role_path }}"/files/terraform
+    terraform destroy -auto-approve
+  when: (operation == "destroy")
+  register: terraform_destroy_output
