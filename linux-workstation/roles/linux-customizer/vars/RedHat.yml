@@ -1,0 +1,7 @@
+---
+packages:
+  - vim
+  - python3
+  - jq
+  - vlc
+  - python-vlc

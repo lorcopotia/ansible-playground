@@ -1,0 +1,25 @@
+---
+- name: Loading variable files
+  ansible.builtin.include_vars: "{{ lookup('ansible.builtin.first_found', params) }}"
+  vars:
+    params:
+      files:
+        - '{{ansible_distribution}}.yml'
+        - '{{ansible_os_family}}.yml'
+        - default.yaml
+      paths:
+        - 'vars'
+
+- block:
+  - name: Adding repositories
+    shell: "{{ item }}"
+    with_items: 
+      - "dnf -y install https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-{{ ansible_distribution_major_version }}.noarch.rpm"
+      - "dnf -y install https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-{{ ansible_distribution_major_version }}.noarch.rpm"
+      
+  - name: Package installer
+    ansible.builtin.yum:
+      name: "{{ item }}"
+      state: present
+    with_items: "{{ packages }}"
+  when: ansible_facts['os_family'] == 'RedHat'

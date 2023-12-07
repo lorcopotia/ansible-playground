@@ -1,0 +1,8 @@
+---
+- name: Configuring Linux OS
+  hosts: localhost
+  become: true
+  roles:
+    - role: linux-customizer
+  vars:
+    operation: "create"       # operation = "create" or "destroy"
