@@ -5,3 +5,5 @@ packages:
   - jq
   - vlc
   - python-vlc
+  - tor
+  - google-chrome-stable

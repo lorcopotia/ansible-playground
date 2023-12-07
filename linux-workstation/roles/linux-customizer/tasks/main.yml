@@ -18,9 +18,20 @@
       - "dnf -y install https://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-{{ ansible_distribution_major_version }}.noarch.rpm"
       - "rpm --import https://packages.microsoft.com/keys/microsoft.asc"
       - sh -c 'echo -e "[code]\nname=Visual Studio Code\nbaseurl=https://packages.microsoft.com/yumrepos/vscode\nenabled=1\ngpgcheck=1\ngpgkey=https://packages.microsoft.com/keys/microsoft.asc" > /etc/yum.repos.d/vscode.repo'
+      - "dnf -y install @virtualization"
 
   - name: Installing packages
     ansible.builtin.yum:
       name: "{{ packages }}"
       state: present
+    notify: 
+      - Enable and start libvirtd
+  
+  - name: Configuring tor
+    replace:
+      path: /etc/tor/torrc
+      regexp: '^\s*#*\s*(SOCKSPort.9050*)'
+      replace: '\1'
+    notify: 
+      - Restart tor
   when: ansible_facts['os_family'] == 'RedHat'

@@ -1,0 +1,11 @@
+---
+- name: Restart tor
+  ansible.builtin.service:
+    name: tor
+    state: restarted
+
+- name: Enable and start libvirtd
+  ansible.builtin.service:
+    name: libvirtd
+    state: started
+    enabled: yes
