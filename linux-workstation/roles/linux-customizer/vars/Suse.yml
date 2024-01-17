@@ -1,0 +1,13 @@
+---
+packages:
+  - vim
+  - jq
+  - tor
+  - libvirt
+  - virt-manager
+  - code
+  - terraform
+  - code
+  - qbittorrent
+  - google-chrome-stable
+  - steam

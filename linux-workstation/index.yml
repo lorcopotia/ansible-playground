@@ -2,7 +2,10 @@
 - name: Configuring Linux OS
   hosts: localhost
   become: true
+  gather_facts: true
   roles:
     - role: linux-customizer
   vars:
+    extra_hdd_uuid: CE66E71766E6FF59
     operation: "create"       # operation = "create" or "destroy"
+

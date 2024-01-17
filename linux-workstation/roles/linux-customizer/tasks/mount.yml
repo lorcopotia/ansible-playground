@@ -1,0 +1,7 @@
+---
+- name: Mount up device by label
+  ansible.posix.mount:
+    path: /mnt/DATOS
+    src: LABEL=DATOS
+    fstype: ntfs-3g
+    state: present

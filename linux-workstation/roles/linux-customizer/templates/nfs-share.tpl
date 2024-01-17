@@ -1,0 +1,1 @@
+{{ nfs_export_directory }} {{ ansible_default_ipv4.address }}/{{ ansible_default_ipv4.prefix }}(rw,sync,root_squash)

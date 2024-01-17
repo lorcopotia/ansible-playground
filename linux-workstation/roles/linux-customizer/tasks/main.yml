@@ -1,5 +1,5 @@
 ---
-- name: Loading variable files
+- name: '[General configurations] Loading variable files'
   ansible.builtin.include_vars: "{{ lookup('ansible.builtin.first_found', params) }}"
   vars:
     params:
@@ -11,7 +11,7 @@
         - 'vars'
 
 - block:
-  - name: Adding repositories
+  - name: '[CentOS/Fedora configurations] Adding repositories'
     shell: "{{ item }}"
     with_items: 
       - "dnf -y install https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-{{ ansible_distribution_major_version }}.noarch.rpm"
@@ -26,12 +26,60 @@
       state: present
     notify: 
       - Enable and start libvirtd
-  
-  - name: Configuring tor
-    replace:
-      path: /etc/tor/torrc
-      regexp: '^\s*#*\s*(SOCKSPort.9050*)'
-      replace: '\1'
-    notify: 
-      - Restart tor
   when: ansible_facts['os_family'] == 'RedHat'
+
+- block:
+  - name: '[Suse configurations] Adding repositories for VSCode'
+    shell: "{{ item }}"
+    with_items:
+    - rpm --import https://packages.microsoft.com/keys/microsoft.asc
+    - zypper addrepo https://packages.microsoft.com/yumrepos/vscode vscode
+    - zypper refresh
+    register: command_result
+    failed_when: "'FAILED' in command_result.stderr"
+    changed_when: false
+  
+  - name: '[Suse configurations] Adding repositories for Google Chrome'
+    shell: "{{ item }}"
+    with_items:
+    - rpm --import https://dl.google.com/linux/linux_signing_key.pub
+    - zypper ar http://dl.google.com/linux/chrome/rpm/stable/x86_64 Google-Chrome
+    - zypper refresh -f 
+    register: command_result
+    failed_when: "'FAILED' in command_result.stderr"
+    changed_when: false
+
+  - name: '[Suse configurations] Installing packages'
+    community.general.zypper:
+      name: "{{ packages }}"
+      state: present
+    notify:
+    - Enable and start libvirtd
+  when: ansible_facts['os_family'] == 'Suse'
+
+- block:
+  - name: '[General configurations] Configuring tor'
+    ansible.builtin.replace:
+      path: /etc/tor/torrc
+      regexp: '^\s*#*\s*(SocksPort.9050*)'
+      replace: '\1'
+    notify:
+    - Restart tor
+
+  - name: '[General configurations] Configuring tor - extras'
+    ansible.builtin.lineinfile:
+      path: /etc/tor/torrc
+      line: 'ExitNodes {nl} StrictNodes 1'
+    notify:
+    - Restart tor
+  
+  - name: '[General configurations] Configuring additional drives'
+    ansible.posix.mount:
+      path: /run/media/dunix/DATOS
+      src: UUID="{{ extra_hdd_uuid }}"
+      fstype: ntfs-3g
+      opts: rw,uid=1000,gid=1000
+      state: mounted
+
+  - debug:
+      var: ansible_facts['devices']
