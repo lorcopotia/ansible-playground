@@ -1,5 +1,0 @@
-.terraform
-.terraform.lock.*
-terraform*
-*.pub
-*.tfvars

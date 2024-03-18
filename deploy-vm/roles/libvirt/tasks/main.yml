@@ -1,0 +1,60 @@
+# Listing VMs
+- name: '[GET] List all VMs'
+  community.libvirt.virt:
+    command: list_vms
+  register: all_vms
+
+- name: '[GET] List only running VMs'
+  community.libvirt.virt:
+    command: list_vms
+    state: running
+  register: running_vms
+
+- name: '[POST] List all'
+  debug:
+    var: all_vms.list_vms
+
+- block:
+    - name: '[POST] Basic Terraform deploy of a service'
+      community.general.terraform:
+        project_path: "{{ ansible_env['PWD'] }}/roles/libvirt/files/terraform"
+        force_init: true
+        state: present
+      register: terraform_create_output
+    
+    - name: '[POST] Wait for VMs IP information'
+      shell: sleep 10
+      delegate_to: localhost
+      tags: [delay]
+
+    - name: '[POST] Setting VMs ips as facts'
+      ansible.builtin.set_fact:
+        vm_ip: "{{ terraform_create_output | json_query('outputs.ips.value[0][0]') }}"
+        #worker_ip: "{{ terraform_create_output | json_query('outputs.ips.value[1][0]') }}"
+
+    - name: '[POST] Wait for VM to be configured'
+      vars:
+        ansible_user: automation
+      wait_for:
+        path: /var/lib/cloud/instance/boot-finished
+      delegate_to: "{{ vm_ip }}"
+
+    - name: '[POST] Initializing vm'
+      vars:
+        ansible_user: automation
+      ansible.builtin.shell: |
+        sudo hostname
+      register: init_result
+      failed_when: "'FAILED' in init_result.stderr"
+      changed_when: false
+      delegate_to: "{{ vm_ip }}"
+    
+  when: (operation == "create")
+
+- name: '[POST] Basic Terraform destroy of a service'
+  ansible.builtin.shell: |
+    cd "{{ role_path }}"/files/terraform
+    terraform destroy -auto-approve
+  when: (operation == "destroy")
+  register: terraform_destroy_output
+  changed_when: false

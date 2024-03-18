@@ -1,0 +1,20 @@
+---
+- name: Deploying VM
+  hosts: localhost
+  become: true
+  
+  tasks:
+    # - name: Installing required packages
+    #   ansible.builtin.pip:
+    #     name: lxml
+
+    - name: Install required packages
+      community.general.zypper:
+        name: python3-lxml
+        state: present
+
+    - name: Calling the appropriate role
+      vars:
+        operation: "create"       # operation = "create" or "destroy"
+      ansible.builtin.include_role:
+        name: libvirt
